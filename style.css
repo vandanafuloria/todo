@@ -79,7 +79,7 @@ p {
 }
 .task-bar>div{
     border:white 1px solid;
-    padding:10px;
+    padding:25px 10px;
     font-size: x-large;
     margin-top: 20px;
     color:black;
@@ -139,4 +139,19 @@ p {
     display: flex;
     justify-content: space-between;
     flex-basis: 15%;
+}
+
+.task-bar span {
+    position: absolute;
+    right: 10px;
+    bottom: 0;
+    font-size: .9rem;
+    color: grey;
+    /* background: black; */
+    padding: 2px 5px;
+    font-family: monospace;
+}
+
+.task-bar {
+    position: relative;
 }
