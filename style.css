@@ -88,6 +88,7 @@ p {
     border-radius: 15px;
     justify-content: space-between;
     align-items: center;
+    position: relative;
 
 }
 .task-bar>div:nth-child(even){

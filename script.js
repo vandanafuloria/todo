@@ -2,54 +2,26 @@ const inputEl = document.querySelector('input');
 const addEl = document.querySelector('.img');
 const taskContainerEl = document.querySelector('.task-bar');
 
-const notes = {};
+let notes = {};
 
-/*
-A note will be represented by
-[ 
-  {
-    note: text,
-    isCompleted: boolean
-  },
-  {}, 
-  ....
-]
 
-{
-   id : {note object},
-   id2: {note object 2}
+function saveToLocalStorage(taskObj) {
+
+    const notesString = JSON.stringify(notes);
+    localStorage.setItem('notes', notesString);
+    console.log('notes string: ', notesString);
+  
 }
-
-{"hello", false, 123}
-{"hello 2", false, 124}
-
-
-[{"hello", false, 123}, {"hello 2", false, 124}]
-
-{
-    123 : {"hello", false, 123},
-    124 : {"hello 2", false, 124},
-}
-
-
--------------------------------------
-
-Sort checked & unchecked notes
-1. Clear all children of notes container
-2. iterate array, uncompleted tasks add
-3. again iterate arry, complete task add
-
-
-1. Each note will have a crated on note with date and time
-2. if note was modified, edited on note with date and time
-
-*/
+/*----------------------------------------------------------------- */
 
 function changeStatus(id, status) {
 
     const note = notes[id];
     note.isCompleted = true;
+    saveToLocalStorage();
 }
+
+
 
 function generateElement(taskObj) {
     
@@ -80,55 +52,35 @@ function generateElement(taskObj) {
 
     const crossBtnEl = document.createElement('button');
     crossBtnEl.textContent = "X";
-    crossBtnEl.classList.add('cross-btn');
-
-    // const spnaEl = document.createElement('span');
-
+    crossBtnEl.classList.add('cross-btn')
     toolContainerEl.append(editEl, crossBtnEl)
-
     taskEl.appendChild(toolContainerEl)
-    // taskEl.appendChild(spnaEl);
+    const spanEl= document.createElement('span');
+    // const editedDateEl = new Date();
+  
+    // const formattedDate = taskObj.created.toLocaleString("en-US", {
+    //   day: "2-digit",    // "07"
+    //   weekday: "short",  // "Fri"
+    //   month: "short",    // "Mar"
+    //   year: "numeric",   // "2025"
+    //   hour: "2-digit",   // "03"
+    //   minute: "2-digit", // "22"
+    //   // second: "2-digit", // "31" seconde i dont wnat 
+    //   hour12: true       // AM/PM format
+    // });
 
+    console.log(`created: ${taskObj.created}, modified: ${taskObj.edited}`)
+    if(taskObj.created.getTime() === taskObj.edited.getTime()) {
+        // this has not been modified
+        spanEl.innerText = `Created At: ${taskObj.created.toLocaleString()}`;
+    } else {
+        spanEl.innerText = `Modified At: ${taskObj.edited.toLocaleString()}`;
+    }
+
+    taskEl.appendChild(spanEl);
     crossBtnEl.onclick = () => deleteHandler(taskObj.id, taskEl);
     editEl.onclick = () => editHandler(taskObj, taskNameEl);
-
-
-
-    // delete handler
-  
-    // crossBtnEl.onclick = () => {
-    //     taskContainerEl.removeChild(taskEl);
-    //     // iterate the array which is tracking the record of note which formed;
-
-    //     for(let i = 0; i < notes.length; i++) { // O(n) =>  n + n = 2n => O(n)
-    //         if(notes[i].id === taskObj.id) {
-    //             notes.splice(i, 1); // removing the note which is present 0n the that index;
-    //             // O(n)
-    //             break;
-    //         }
-    //     }
-    // }
-
-
-    // edit note handler
-    // editEl.onclick = function() {
-    //     const editedText = prompt("Edit your note", taskObj.note);
-    //     if(editedText.length === 0) return ;
-    //     taskNameEl.textContent = editedText;
-
-    //     // for(let i = 0; i < notes.length; i++) {
-    //     //     if(notes[i].id === taskObj.id) {
-    //     //         notes[i].note = editedText;
-    //     //         break;
-    //     //     }
-    //     // }
-    //     const editedNote = notes[taskObj.id];
-    //     editedNote.note = editedText;
-
-    // }
-
-
-    checkList.addEventListener('change', (e) => {
+        checkList.addEventListener('change', (e) => {
         changeStatus(taskObj.id, e.target.checked)
         taskContainerEl.appendChild(taskEl);
     });
@@ -143,13 +95,27 @@ function editHandler (taskObj, taskNameEl) {
     taskNameEl.textContent = editedText;
 
     const editedNote = notes[taskObj.id];
+    taskObj.edited = new Date();
     editedNote.note = editedText;
+
+
+    taskNameEl.nextSibling.nextSibling.textContent = `Modified at ${taskObj.edited.toLocaleString()}`;
+    taskNameEl.textContent = editedText;
+    
+    console.log("this is edite:", taskObj.edited);
+    saveToLocalStorage();
+   
 }
 
 function deleteHandler(id, task) {
     delete notes[id];
     taskContainerEl.removeChild(task)
+   saveToLocalStorage();
 }
+
+
+
+//************************************************************************************************************ */
 
 function formTaskBar(){
     const taskName = inputEl.value;
@@ -162,25 +128,58 @@ function formTaskBar(){
     const taskObj = {
         id: Date.now(),
         note: taskName,
-        isCompleted: false
+        isCompleted: false,
+        created: new Date(),
+        edited: new Date(),
     };
+    
 
     const taskEl = generateElement(taskObj);
+    console.log(taskEl);
+    
 
-    taskContainerEl.insertBefore(taskEl, taskContainerEl.firstChild);// adding new one to the first postin 
-    const audioEl = new Audio('./assets/ting.mp3');  // playing audio
+    taskContainerEl.insertBefore(taskEl, taskContainerEl.firstChild);
+    const audioEl = new Audio('./assets/ting.mp3');
     audioEl.play();
-        inputEl.value = "";
+    inputEl.value = "";
 
-//    notes.push(taskObj); /// new formed obj push to array;
-    // notes[]
-    // id : taskObj, 123
-    notes[taskObj.id] = taskObj
-
-
-
-    console.log(notes);
+    notes[taskObj.id] = taskObj;
+    saveToLocalStorage(taskObj);
+ 
 }
+
+
+
+//************************************************************************************************
+
+
+
+function initializeApplication() {
+
+/**
+ * 1. get items from local storage
+ * 2. parse the json string
+ * 3. render the notes in UI
+ */
+    console.log("Loaded")
+    const notesString = localStorage.getItem('notes');
+    const notesObj = JSON.parse(notesString);
+    if(!notesObj) return;
+
+    console.log(notesObj)
+
+    for(let id in notesObj) {
+        const note = notesObj[id];
+
+        note.created = new Date(note.created);
+        note.edited = new Date(note.edited);
+
+        const noteEl = generateElement(note);
+        taskContainerEl.appendChild(noteEl);
+    }
+    notes = notesObj;
+}
+
 
 
 
@@ -194,7 +193,7 @@ window.addEventListener('keypress', (e) => {
     }
 })
 
-
+window.addEventListener('load', initializeApplication);
 
 
 
